@@ -25,9 +25,9 @@ contract DeployAttackScript is Script {
     function run() public {
         vm.startBroadcast();
         AttackContract attackContract = new AttackContract(
-            address(0x6eE69aE7b2E04Eab5C4be37A13fA9e0378caA5b7)
+            address(0xBF0db7df9340254B9d44853CF27efc3Cb0702CBD)
         );
-        payable(address(attackContract)).transfer(15e17);
+        payable(address(attackContract)).transfer(9 ether);
         vm.stopBroadcast();
     }
 }
