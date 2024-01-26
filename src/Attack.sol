@@ -17,6 +17,10 @@ contract AttackContract {
         _;
     }
 
+    function updateLotteryContract(address _lotteryContract) public onlyOwner {
+        lotteryContract = YourContract(_lotteryContract);
+    }
+
     function attack() public onlyOwner {
         uint256 totalTickets = 0;
         uint256 round = lotteryContract.lotteryRound();

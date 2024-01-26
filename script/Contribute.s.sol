@@ -14,7 +14,7 @@ contract SetupScript is Script {
             payable(0xbd4F35A8c49cBFeE2a721623dD684912dc2d6a19)
         );
         addr.startLottery();
-        addr.contribute{value: 3e16}();
+        addr.contribute{value: 40e17}();
         vm.stopBroadcast();
     }
 }
@@ -25,9 +25,9 @@ contract DeployAttackScript is Script {
     function run() public {
         vm.startBroadcast();
         AttackContract attackContract = new AttackContract(
-            address(0x331eBA5112cb218977e891D496380a0b653f4071)
+            address(0x6eE69aE7b2E04Eab5C4be37A13fA9e0378caA5b7)
         );
-        payable(address(attackContract)).transfer(5e16);
+        payable(address(attackContract)).transfer(15e17);
         vm.stopBroadcast();
     }
 }

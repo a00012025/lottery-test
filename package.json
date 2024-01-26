@@ -1,0 +1,19 @@
+{
+  "name": "lottery-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bnc-sdk": "^4.6.7",
+    "dotenv": "^16.4.1",
+    "ethers": "^6.10.0",
+    "web3": "^4.4.0",
+    "ws": "^8.16.0"
+  }
+}
